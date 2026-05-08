@@ -1,0 +1,35 @@
+name: Eswatini Job Scanner
+
+on:
+  schedule:
+    - cron: '0 8 * * *' # Runs daily at 08:00 AM UTC
+  workflow_dispatch: # Allows manual run
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4
+
+      - name: Run Scraper
+        env:
+          EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+        run: python scraper.py
+
+      - name: Commit changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add seen_links.txt
+          git commit -m "Update seen jobs list" || exit 0
+          git push
